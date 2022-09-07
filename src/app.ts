@@ -25,6 +25,11 @@ app.post('/realtime/preview', validate(FigmaPostRealtimePreviewValidation, {}, {
   const { html, userId } = req.body;
 
   const userSockets = sockets[userId];
+  if (!userSockets) {
+    console.log('no user sockets');
+    res.status(200).send('no user sockets');
+    return
+  }
   userSockets.forEach((socket) => {
     socket.emit('realtime-preview', { html });
   });
