@@ -1,3 +1,3 @@
-import { Socket } from "socket.io";
+import { Socket } from 'socket.io';
 
-export const sockets: { [key: string]: Set<Socket> } = {};
+export const userSockets: Map<string, Set<Socket>> = new Map();

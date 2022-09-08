@@ -1,38 +1,28 @@
-import express from 'express';
-import morgan from 'morgan';
-import { validate, Joi } from 'express-validation';
 import cors from 'cors';
-import { sockets } from './db';
+import morgan from 'morgan';
+import express from 'express';
+import { validate, Joi } from 'express-validation';
 
-const app = express();
-app.use(morgan('combined'));
+import { userSockets } from './db';
 
-app.use(cors());
-app.use(express.json());
+const requiredString = Joi.string().required();
 
-const FigmaPostRealtimePreviewValidation = {
-  body: Joi.object({
-    html: Joi.string().required(),
-    userId: Joi.string().required(),
-  }),
+const LivePreviewUpdateValidation = {
+  body: Joi.object({ html: requiredString, userId: requiredString }),
 };
 
-app.get('/', async (req, res) => {
-  res.send('Hello Anima!!');
-});
+const app = express();
 
-app.post('/realtime/preview', validate(FigmaPostRealtimePreviewValidation, {}, {}), async (req, res) => {
+app.use(morgan('combined'));
+app.use(cors());
+app.use(express.json({ limit: '100mb' }));
+
+app.get('/', async (_req, res) => res.send('Hello Anima!!'));
+
+app.post('/live-preview', validate(LivePreviewUpdateValidation), async (req, res) => {
   const { html, userId } = req.body;
 
-  const userSockets = sockets[userId];
-  if (!userSockets) {
-    console.log('no user sockets');
-    res.status(200).send('no user sockets');
-    return
-  }
-  userSockets.forEach((socket) => {
-    socket.emit('realtime-preview', { html });
-  });
+  userSockets.get(userId)?.forEach((socket) => socket.emit('live-preview-update', { html }));
 
   res.status(200).send('ok');
 });
